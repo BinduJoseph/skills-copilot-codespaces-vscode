@@ -1,68 +1,64 @@
 //Create Web Server
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
-const moment = require('moment');
-const { v4: uuidv4 } = require('uuid');
-const { check, validationResult } = require('express-validator');
-
-app.use(bodyParser.urlencoded({ extended: false }));
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
+var fs = require('fs');
+//Create Web Server
+app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(cors());
-
-//Read Comments
-app.get('/comments', (req, res) => {
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) throw err;
-        res.send(data);
+app.get('/listUsers', function (req, res) {
+    fs.readFile(__dirname + "/" + "users.json", 'utf8', function (err, data) {
+        console.log(data);
+        res.end(data);
     });
 });
-
-//Create Comment
-app.post('/comments', [
-    check('comment').isLength({ min: 1 }).withMessage('Comment is required')
-], (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).json({ errors : errors.array() });
+app.post('/addUser', function (req, res) {
+    // First read existing users.
+    fs.readFile(__dirname + "/" + "users.json", 'utf8', function (err, data) {
+        data = JSON.parse(data);
+        data["user4"] = req.body;
+        console.log(data);
+        res.end(JSON.stringify(data));
+    });
+});
+app.get('/:id', function (req, res) {
+    // First read existing users.
+    fs.readFile(__dirname + "/" + "users.json", 'utf8', function (err, data) {
+        var users = JSON.parse(data);
+        var user = users["user" + req.params.id];
+        console.log(user);
+        res.end(JSON.stringify(user));
+    });
+});
+var id = 2;
+app.delete('/deleteUser', function (req, res) {
+    // First read existing users.
+    fs.readFile(__dirname + "/" + "users.json", 'utf8', function (err, data) {
+        data = JSON.parse(data);
+        delete data["user" + id];
+        console.log(data);
+        res.end(JSON.stringify(data));
+    });
+});
+var user = {
+    "user4": {
+        "name": "mohit",
+        "password": "password4",
+        "profession": "teacher",
+        "id": 4
     }
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) throw err;
-        const comments = JSON.parse(data);
-        const newComment = {
-            id: uuidv4(),
-            comment: req.body.comment,
-            date: moment().format('MMMM Do YYYY, h:mm:ss a')
-        };
-        comments.push(newComment);
-        fs.writeFile('./data/comments.json', JSON.stringify(comments), (err) => {
-            if (err) throw err;
-            res.send(newComment);
-        });
+};
+app.post('/addUser', function (req, res) {
+    // First read existing users.
+    fs.readFile(__dirname + "/" + "users.json", 'utf8', function (err, data) {
+        data = JSON.parse(data);
+        data["user4"] = user["user4"];
+        console.log(data);
+        res.end(JSON.stringify(data));
     });
 });
-
-//Delete Comment
-app.delete('/comments/:id', (req, res) => {
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) throw err;
-        const comments = JSON.parse(data);
-        const filteredComments = comments.filter(comment => comment.id !== req.params.id);
-        fs.writeFile('./data/comments.json', JSON.stringify(filteredComments), (err) => {
-            if (err) throw err;
-            res.send('Comment deleted');
-        });
-    });
+var server = app.listen(8081, function () {
+    var host = server.address().address;
+    var port = server.address().port;
 });
-
-//Update Comment
-app.put('/comments/:id', [
-    check('comment').isLength({ min: 1 }).withMessage('Comment is required')
-], (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).
-
